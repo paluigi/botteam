@@ -1,6 +1,7 @@
 import telebot
 import sqlite3
 from datetime import datetime
+import requests
 import json
 import configparser
 
@@ -101,8 +102,13 @@ cur.execute(
 cur.execute(
     "CREATE TABLE IF NOT EXISTS leaderboard (chat_id text, score integer, timestamp text)"
 )
+cur.execute(
+    "CREATE TABLE IF NOT EXISTS playpoints (referral text, lat integer, lon text)"
+)
 conn.commit()
 conn.close()
+# To be implemented
+# Populate playpoints table
 
 
 # Send message for info
@@ -127,10 +133,11 @@ def register_user(message):
     # Check that the user did not play more than 3 times
     # with the same referral code
     if check_referral(cid, referral):
+        # Implement game using referral
         pass
     else:
         pass
-        # Implement game using referral
+        # Implement suggestion for other places to go
 
 
 # Start polling for incoming messages
