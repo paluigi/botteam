@@ -1,0 +1,7 @@
+help - Info about BozenBot
+start - Start using BozenBot
+around - Show points of interest around me
+upload - Upload a geolocalized picture
+delete - Delete all my data
+
+# List of commands to insert via BotFather
