@@ -1,0 +1,59 @@
+{
+    "comando": "id comando",
+    "domanda": {
+        "testo": "testo di esempio",
+        "immagini": [
+            "url1",
+            "url2",
+            "url3"
+        ]
+    },
+    "risposta": {
+        "testo": "testo esempio",
+        "risposta_esatta": true,
+        "immagine": "url1",
+        "eventi": [
+            {
+                "nome": "nome evento",
+                "descrizione": "descrizione evento",
+                "data_inizio": "YYYY-MM-DD",
+                "data_fine": "YYYY-MM-DD"
+            },
+            {
+                "nome": "nome evento",
+                "descrizione": "descrizione evento",
+                "data_inizio": "YYYY-MM-DD",
+                "data_fine": "YYYY-MM-DD"
+            },
+            {
+                "nome": "nome evento",
+                "descrizione": "descrizione evento",
+                "data_inizio": "YYYY-MM-DD",
+                "data_fine": "YYYY-MM-DD"
+            }
+        ]
+    },
+    "classifica": [
+        {
+            "username": "nome utente",
+            "punteggio": 10,
+            "andamento": "up"
+        },
+        {
+            "username": "nome utente",
+            "punteggio": 7,
+            "andamento": "down"
+        },
+        {
+            "username": "nome utente",
+            "punteggio": 5,
+            "andamento": "eq"
+        },
+        {
+            "username": "nome utente",
+            "punteggio": 4,
+            "andamento": "eq"
+        }
+
+    ]
+}
