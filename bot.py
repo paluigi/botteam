@@ -5,10 +5,8 @@ from datetime import datetime
 import requests
 import json
 import configparser
-
-# Temporary imports
+import time
 import random
-import string
 
 # End Temporary
 
@@ -50,28 +48,28 @@ def user_check_new(cid, db_file=DB_FILE):
         return False
 
 
-def ask_nickname(cid, bot):
+def ask_nickname(message, bot):
     """
     Ask preferred nickname to new users
     """
     # To be implemented
-    # Temporary random function
+    # Temporary using Telegram Username
     # markup = types.ForceReply(selective=False)
     # bot.send_message(cid, "Write your username:", reply_markup=markup)
-    letters = string.ascii_letters
-    nickname = "".join(random.choices(letters, k=10))
+    nickname = message.chat.username
     return nickname
+
 
 
 def ask_gdpr(cid, bot):
     """
     Ask GDPR consent to new users
     """
-    # To be implemented
-    markup = types.ReplyKeyboardMarkup(row_width=2)
-    itembtn1 = types.KeyboardButton('yes')
-    itembtn2 = types.KeyboardButton('no')
-    markup.add(itembtn1, itembtn2)
+    # To be better implemented
+    markup = types.ReplyKeyboardMarkup(row_width=1)
+    itembtn1 = types.KeyboardButton('GDPR - YES')
+    #itembtn2 = types.KeyboardButton('no')
+    markup.add(itembtn1)
     bot.send_message(cid, "Provide consent for GDPR. You can see our privacy policy at https://noi.bz.it/en/privacy-cookie-policy:", reply_markup=markup)
     return "consent"
 
@@ -88,11 +86,41 @@ def check_referral(cid, referral, db_file=DB_FILE):
     )
     results = cur.fetchall()
     conn.close()
+    print("previous games", results)
     # play maximum three times from the same referral
     if len(results) > 3:
         return False
     else:
         return True
+
+
+def get_webcams():
+    """
+    Get three random webcams from opendatahub.bz.it
+    Prepares dictionary for trivia
+    """
+    seed = random.randint(0, 10)
+    link = f"https://tourism.opendatahub.bz.it/v1/WebcamInfo?pagenumber=1&pagesize=3&active=true&odhactive=true&seed={seed}&removenullvalues=false"
+    results_json = requests.get(link)
+    results = json.loads(results_json.text)
+    webcams = results.get("Items")
+    image_urls = [item.get("Webcamurl") for item in webcams]
+    shortnames = [item.get("Shortname") for item in webcams]
+    trivia = [{"key": i,  "url": url, "name": name} for (i, url, name) in zip([1, 2, 3], image_urls, shortnames)]
+    return trivia
+
+
+def setup_question(cid, referral, db_file=DB_FILE):
+    ts = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+    correct = random.randint(0, 2)
+    conn = sqlite3.connect(db_file)
+    cur = conn.cursor()
+    cur.execute("insert into answers (chat_id, referral, correct, timestamp) values (?, ?, ?, ?)", (cid, referral, correct, ts))
+    question_id = cur.lastrowid
+    conn.commit()
+    conn.close()
+    print(question_id, correct)
+    return question_id, correct
 
 
 # Process setup
@@ -105,7 +133,7 @@ cur.execute(
     "CREATE TABLE IF NOT EXISTS users (chat_id text, nickname text, gdpr text, timestamp text)"
 )
 cur.execute(
-    "CREATE TABLE IF NOT EXISTS answers (chat_id text, points integer, referral text, timestamp text)"
+    "CREATE TABLE IF NOT EXISTS answers (id INTEGER PRIMARY KEY AUTOINCREMENT, chat_id text, points integer, referral text, correct integer, timestamp text)"
 )
 cur.execute(
     "CREATE TABLE IF NOT EXISTS leaderboard (chat_id text, score integer, timestamp text)"
@@ -127,22 +155,58 @@ def send_info(message):
 
 # Send message for start
 @bot.message_handler(commands=["start"])
-def register_user(message):
+def greet_user(message):
     cid = message.chat.id
     referral = telebot.util.extract_arguments(message.text)
+    print("referral: ", referral)
     if user_check_new(cid):
-        gdpr = ask_gdpr(cid, bot)
-        nickname = ask_nickname(cid)
-        ts = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-        user_registration(cid, nickname, gdpr, ts, db_file=DB_FILE)
+        ask_gdpr(cid, bot)   
     # Check that the user did not play more than 3 times
     # with the same referral code
-    if check_referral(cid, referral):
-        # Implement game using referral
-        pass
     else:
-        pass
-        # Implement suggestion for other places to go
+        if referral:
+            if check_referral(cid, referral):
+                trivia = get_webcams()
+                question_id, correct = setup_question(cid, referral)
+                question_text = f"{question_id} - Which one of the pictures is {trivia[correct].get('name')}?"
+                bot.send_message(cid, question_text)
+                for i, option in enumerate(trivia):
+                    bot.send_message(cid, f"Image {i+1}")
+                    bot.send_photo(cid, option.get("url"))
+                markup = types.ReplyKeyboardMarkup(row_width=3)
+                itembtn1 = types.KeyboardButton(f'Question {question_id} - Image 1')
+                itembtn2 = types.KeyboardButton(f'Question {question_id} - Image 2')
+                itembtn3 = types.KeyboardButton(f'Question {question_id} - Image 3')
+                markup.add(itembtn1, itembtn2, itembtn3)
+                bot.send_message(cid, question_text, reply_markup=markup)
+                # Implement game using referral
+            else:
+                pass
+                # Implement suggestion for other places to go
+
+
+@bot.message_handler(func=lambda message: message.text == 'GDPR - YES')
+def register_user(message):
+    cid = message.chat.id
+    gdpr = "consent"
+    nickname = ask_nickname(message, bot)
+    ts = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+    user_registration(cid, nickname, gdpr, ts, db_file=DB_FILE)
+    markup = types.ReplyKeyboardRemove(selective=False) 
+    bot.send_message(cid, "Great, you are ready to play! Scan the QR code near you!", reply_markup=markup)
+
+
+@bot.message_handler(regexp="^Question \d+ - Image [123]$")
+def handle_quiz_answer(message):
+    question_id = message.text.split(" - ")[0][9:]
+    answer_id = message.text[-1:]
+    print("question ", question_id)
+    print("answer ", answer_id)
+
+
+@bot.message_handler()
+def debug(message):
+    print("message not handled", message)
 
 
 # Start polling for incoming messages
