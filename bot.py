@@ -139,8 +139,8 @@ def send_next_events(bot, cid):
     link = f"https://destinationdata.alpinebits.opendatahub.bz.it/2021-04/events?page[size]=3&page[number]=1&filter[startDate][gt]={ts}&sort=startDate"
     results_json = requests.get(link)
     results = json.loads(results_json.text)
-    events_raw = [item.get("attributes").get("url") for item in results.get("data")]
-    event_keys = [list(i.keys())[0] for i in events_raw]
+    events_raw = [item.get("attributes").get("url") for item in results.get("data") if item.get("attributes").get("url") is not None]
+    event_keys = [list(i.keys())[0] for i in events_raw if i is not None]
     event_urls = [i.get(k) for i,k in zip(events_raw, event_keys)]
     bot.send_message(cid, "Here some nearby events you may enjoy in the next few days! Share them with your friends!")
     for url in event_urls:
