@@ -29,7 +29,7 @@ def send(c):
     r = requests.post(PORTAL_URL, json = c)
     pp.pprint(r.status_code)
     
-    time.sleep(3)
+    time.sleep(7)
 
 
 def main():
