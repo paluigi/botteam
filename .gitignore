@@ -115,3 +115,5 @@ dmypy.json
 secret.ini
 bozenbot.db
 .gitignore
+bozenbot.db
+secret.ini
