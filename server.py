@@ -5,6 +5,8 @@ import sys
 import json
 import logging
 import queue
+import random
+import requests
 
 '''
 cherrypy.config.update({'server.socket_host': '0.0.0.0',
@@ -38,6 +40,7 @@ conf = {
          'tools.staticdir.dir': '',
          'tools.staticdir.root': location,
          'tools.staticdir.index': 'index.html',
+         'tools.caching.on' : False,
      }
 }
 
@@ -45,21 +48,18 @@ conf = {
 
 
 class Commands(object):
-
-    def __init__(self):
-        self.fifo = queue.Queue()
-
-
-
+    
+    fifo = queue.Queue()
+    
     exposed = True
     
     @cherrypy.tools.json_in()
     @cherrypy.tools.json_out()
     def GET(self):
-        if self.fifo.empty():
+        if Commands.fifo.empty():
             return {'update':'false','payload':''}
         else:
-            payload= self.fifo.get()
+            payload= Commands.fifo.get()
             return {'update':'true','payload':payload}
             
     @cherrypy.tools.json_in()
@@ -67,7 +67,7 @@ class Commands(object):
     def POST(self):
         
         input_json = cherrypy.request.json
-        self.fifo.put(input_json)
+        Commands.fifo.put(input_json)
         return {'ack':'ok','command':input_json["comando"]}
     
     @cherrypy.tools.json_in()
@@ -84,6 +84,24 @@ class Commands(object):
         
 COMMAND_OBJ = Commands()
 
+class RandomImage(object):
+
+     exposed = True
+     
+     def GET(self):
+        seed = random.randint(0, 10)
+        link = f"https://tourism.opendatahub.bz.it/v1/WebcamInfo?pagenumber=1&pagesize=1&active=true&odhactive=true&seed={seed}&removenullvalues=false"
+        results_json = requests.get(link)
+        results = json.loads(results_json.text)
+        webcams = results.get("Items")
+        image_urls = [item.get("Webcamurl") for item in webcams][0]
+        return image_urls
+
+
+RANDIMAGE_OBJ = RandomImage()
+
+
+
 if __name__ == '__main__':
 
 
@@ -92,6 +110,12 @@ if __name__ == '__main__':
     cherrypy.tree.mount(Root(), '/',conf)
     cherrypy.tree.mount(
         COMMAND_OBJ, '/api/command',
+        {'/':
+            {'request.dispatch': cherrypy.dispatch.MethodDispatcher()}
+        }
+    )
+    cherrypy.tree.mount(
+        RANDIMAGE_OBJ, '/api/randimage',
         {'/':
             {'request.dispatch': cherrypy.dispatch.MethodDispatcher()}
         }
