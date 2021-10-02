@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-F3w7mX95PdgyTmZZMECAngseQB83DfGTowi0iMjiWaeVhAn4FJkqJByhZMI3AhiU" crossorigin="anonymous">
+
+    <title>Wilkommen! by AlpenBot</title>
+	<!--
+	<style>
+		
+		.row > div {
+			background: lightgrey;
+			border: 1px solid grey;
+		}
+</style>
+-->
+<style>
+		#qrcode {
+
+			margin:auto;
+			height:100px;
+
+		}
+	</style>
+  </head>
+
+
+<body>
+	<header class="bg-light text-center text-lg-start header header-fixed-top">
+		<div class="container">
+			<div class="row">
+				<div class="col">
+				 <h1 >Hello, friend !</h1>
+				</div>
+				
+			</div>
+		</div>
+	</header>
+    <main role="main" class="container">
+		
+		<div class="row">
+			<div class="col-12 col-sm-6 col-lg-8"><div id="question" ></div></div>
+			<div class="col-6 col-lg-4"></div>
+		</div>
+	</main>
+	<footer class="bg-light text-center text-lg-start footer fixed-bottom">
+		<!-- Grid container -->
+		<div class="container">
+			<div class="row">
+				<div class="col-15 col-sm-9 col-lg-10">the Bozenbot</div>
+				<div class="col-3 col-lg-2 " style="text-align: center;">
+					<img   alt="QR Code" id="qrcode"    src="data:image/png;base64,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" />
+				</div>
+			</div>
+		</div>
+	</footer>
+    <!-- Optional JavaScript; choose one of the two! -->
+
+    <!-- Option 1: Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-/bQdsTh/da6pkI1MST/rWKFNjaCP5gBSY4sEBT38Q/9RBh9AH40zEOg7Hlq2THRZ" crossorigin="anonymous"></script>
+	<script>
+	// api url
+	const api_url = "api/command"
+  
+	// Defining async function
+	async function getapi(url) {
+		
+		// Storing response
+		const response = await fetch(url);
+		
+		// Storing data in form of JSON
+		var data = await response.json();
+		console.log(data);
+		if(data.update == 'true'){
+			show(data);
+		}
+		
+	}
+	
+	// Demo purposes
+	setInterval(function() {
+		// Calling that async function
+		getapi(api_url);
+	}, 5000);
+
+	
+	function show(data) {
+	
+		var payload = data.payload;
+		var command = payload.comando;
+		var div ="";
+		if(command == 'domanda'){
+			
+			div += "<div>"
+			div += "<p>"+payload.domanda.testo+"</p>";
+			div += "<p>"
+			for (let r of payload.domanda.immagini) {
+			
+				div += "<img src=\""+r+"\"  />"
+			
+			}
+			div += "</p>"
+			div += "</div>"
+		}
+    
+       
+		// Setting innerHTML as tab variable
+		document.getElementById("question").innerHTML = div;
+	}
+  
+	
+	</script>
+</body>
+</html>
