@@ -35,7 +35,18 @@ def domanda(trivia,text):
     command["domanda"]["immagini"]=list(map(lambda i: i["url"],trivia))
 
     send(command)
+
+
+def answer(text, correct, image):
+    risposta = {}
+    risposta["comando"]="risposta"
+    risposta["risposta"]={}
+    risposta["risposta"]["testo"]=text
+    risposta["risposta"]["risposta_esatta"]=correct
+    risposta["risposta"]["immagine"]=image
+    risposta["risposta"]["eventi"]=[]
     
+    send(risposta)
 
 def send(c):
     r = requests.post(PORTAL_URL, json = c)

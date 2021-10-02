@@ -6,7 +6,7 @@ import requests
 import json
 import configparser
 import random
-from client import domanda
+from client import domanda, answer
 
 # End Temporary
 
@@ -86,10 +86,10 @@ def check_referral(cid, referral, db_file=DB_FILE):
     )
     results = cur.fetchall()
     conn.close()
-    print("previous games", results)
     # play maximum three times from the same referral
     if len(results) > 3:
-        return False
+        # Put to False to limit games
+        return True
     else:
         return True
 
@@ -110,17 +110,29 @@ def get_webcams():
     return trivia
 
 
-def setup_question(cid, referral, db_file=DB_FILE):
+def setup_question(cid, referral, trivia, db_file=DB_FILE):
     ts = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
     correct = random.randint(0, 2)
+    url = trivia[correct].get("url")
     conn = sqlite3.connect(db_file)
     cur = conn.cursor()
-    cur.execute("insert into answers (chat_id, referral, correct, timestamp) values (?, ?, ?, ?)", (cid, referral, correct, ts))
+    cur.execute("insert into answers (chat_id, referral, correct, url, timestamp) values (?, ?, ?, ?, ?)", (cid, referral, correct, url, ts))
     question_id = cur.lastrowid
     conn.commit()
     conn.close()
-    print(question_id, correct)
     return question_id, correct
+
+
+def check_answer(question_id, answer_id, db_file=DB_FILE):
+    conn = sqlite3.connect(db_file)
+    cur = conn.cursor()
+    cur.execute(
+        "select correct, url from answers where id = ?", (int(question_id),)
+    )
+    results = cur.fetchone()
+    conn.close()
+    return results
+
 
 
 # Process setup
@@ -133,7 +145,7 @@ cur.execute(
     "CREATE TABLE IF NOT EXISTS users (chat_id text, nickname text, gdpr text, timestamp text)"
 )
 cur.execute(
-    "CREATE TABLE IF NOT EXISTS answers (id INTEGER PRIMARY KEY AUTOINCREMENT, chat_id text, points integer, referral text, correct integer, timestamp text)"
+    "CREATE TABLE IF NOT EXISTS answers (id INTEGER PRIMARY KEY AUTOINCREMENT, chat_id text, points integer, referral text, correct integer, url text, timestamp text)"
 )
 cur.execute(
     "CREATE TABLE IF NOT EXISTS leaderboard (chat_id text, score integer, timestamp text)"
@@ -167,7 +179,7 @@ def greet_user(message):
         if referral:
             if check_referral(cid, referral):
                 trivia = get_webcams()
-                question_id, correct = setup_question(cid, referral)
+                question_id, correct = setup_question(cid, referral, trivia)
                 question_text = f"{question_id} - Which one of the pictures is {trivia[correct].get('name')}?"
                 domanda(trivia, question_text)
                 bot.send_message(cid, question_text)
@@ -199,10 +211,11 @@ def register_user(message):
 
 @bot.message_handler(regexp="^Question \d+ - Image [123]$")
 def handle_quiz_answer(message):
-    question_id = message.text.split(" - ")[0][9:]
-    answer_id = message.text[-1:]
-    print("question ", question_id)
-    print("answer ", answer_id)
+    question_id = message.text.split(" - ")[0][9:].strip()
+    answer_id = message.text[-1:].strip()
+    correct, url = check_answer(question_id, answer_id)
+    answer("The correct answer is:", correct, url)
+    
 
 
 @bot.message_handler()
