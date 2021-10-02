@@ -13,6 +13,7 @@ pp = pprint.PrettyPrinter(indent=4)
 
 PORTAL_URL = 'http://botteam.eu.ngrok.io/api/command'
 
+'''
 def get_webcams():
     seed = random.randint(0, 10)
     link = f"https://tourism.opendatahub.bz.it/v1/WebcamInfo?pagenumber=1&pagesize=3&active=true&odhactive=true&seed={seed}&removenullvalues=false"
@@ -23,13 +24,24 @@ def get_webcams():
     shortnames = [item.get("Shortname") for item in webcams]
     trivia = [{"key": i, "url": url, "name": name} for (i, url, name) in zip([1, 2, 3], image_urls, shortnames)]
     return trivia
+'''
 
+
+def domanda(trivia,text):
+    command = {}
+    command["comando"]="domanda"
+    command["domanda"]={}
+    command["domanda"]["testo"]=text
+    command["domanda"]["immagini"]=list(map(lambda i: i["url"],trivia))
+
+    send(command)
+    
 
 def send(c):
     r = requests.post(PORTAL_URL, json = c)
     pp.pprint(r.status_code)
     
-    time.sleep(7)
+    #time.sleep(7)
 
 
 def main():
