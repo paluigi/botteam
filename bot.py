@@ -5,8 +5,8 @@ from datetime import datetime
 import requests
 import json
 import configparser
-import time
 import random
+from client import domanda
 
 # End Temporary
 
@@ -169,6 +169,7 @@ def greet_user(message):
                 trivia = get_webcams()
                 question_id, correct = setup_question(cid, referral)
                 question_text = f"{question_id} - Which one of the pictures is {trivia[correct].get('name')}?"
+                domanda(trivia, question_text)
                 bot.send_message(cid, question_text)
                 for i, option in enumerate(trivia):
                     bot.send_message(cid, f"Image {i+1}")
