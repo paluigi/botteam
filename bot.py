@@ -1,4 +1,5 @@
 import telebot
+from telebot import types
 import sqlite3
 from datetime import datetime
 import requests
@@ -34,7 +35,7 @@ def user_registration(cid, nickname, gdpr, ts, db_file=DB_FILE):
     return True
 
 
-def user_check(cid, db_file=DB_FILE):
+def user_check_new(cid, db_file=DB_FILE):
     """
     Check if a user exists in the chatbot database
     """
@@ -44,27 +45,34 @@ def user_check(cid, db_file=DB_FILE):
     results = cur.fetchone()
     conn.close()
     if results is None:
-        return False
-    else:
         return True
+    else:
+        return False
 
 
-def ask_nickname():
+def ask_nickname(cid, bot):
     """
     Ask preferred nickname to new users
     """
     # To be implemented
     # Temporary random function
+    # markup = types.ForceReply(selective=False)
+    # bot.send_message(cid, "Write your username:", reply_markup=markup)
     letters = string.ascii_letters
     nickname = "".join(random.choices(letters, k=10))
     return nickname
 
 
-def ask_gdpr():
+def ask_gdpr(cid, bot):
     """
     Ask GDPR consent to new users
     """
     # To be implemented
+    markup = types.ReplyKeyboardMarkup(row_width=2)
+    itembtn1 = types.KeyboardButton('yes')
+    itembtn2 = types.KeyboardButton('no')
+    markup.add(itembtn1, itembtn2)
+    bot.send_message(cid, "Provide consent for GDPR. You can see our privacy policy at https://noi.bz.it/en/privacy-cookie-policy:", reply_markup=markup)
     return "consent"
 
 
@@ -122,12 +130,9 @@ def send_info(message):
 def register_user(message):
     cid = message.chat.id
     referral = telebot.util.extract_arguments(message.text)
-    if user_check(cid):
-        # continue to play
-        pass
-    else:
-        nickname = ask_nickname()
-        gdpr = ask_gdpr()
+    if user_check_new(cid):
+        gdpr = ask_gdpr(cid, bot)
+        nickname = ask_nickname(cid)
         ts = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
         user_registration(cid, nickname, gdpr, ts, db_file=DB_FILE)
     # Check that the user did not play more than 3 times
