@@ -123,7 +123,7 @@ def setup_question(cid, referral, trivia, db_file=DB_FILE):
     return question_id, correct
 
 
-def check_answer(question_id, answer_id, db_file=DB_FILE):
+def check_answer(question_id, db_file=DB_FILE):
     conn = sqlite3.connect(db_file)
     cur = conn.cursor()
     cur.execute(
@@ -211,11 +211,16 @@ def register_user(message):
 
 @bot.message_handler(regexp="^Question \d+ - Image [123]$")
 def handle_quiz_answer(message):
+    cid = message.chat.id
     question_id = message.text.split(" - ")[0][9:].strip()
-    answer_id = message.text[-1:].strip()
-    correct, url = check_answer(question_id, answer_id)
-    answer("The correct answer is:", correct, url)
-    
+    answer_id = int(message.text[-1:].strip())
+    correct, url = check_answer(question_id)
+    answer(f"The correct answer is {correct +1}", correct, url)
+    markup = types.ReplyKeyboardRemove(selective=False) 
+    if int(correct) == (answer_id - 1):
+        bot.send_message(cid, "Great, you are correct!", reply_markup=markup)
+    else:
+        bot.send_message(cid, f"Sorry, the right answer is {correct +1}", reply_markup=markup)
 
 
 @bot.message_handler()
